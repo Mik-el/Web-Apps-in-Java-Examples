@@ -10,10 +10,10 @@ The code is structured in exercises.
 2) a folder (Text of Exercises) summarizes what each program should do (in Italian).
 
 ## What you need to run this code
-1)Eclipse IDE for Java EE Developers
-2)JRE (I used v.1.8.0_251 but you can use newer versions)
-3)Apache Tomcat (I used version 9.0)
-4)Apache CXF Library (I used v.3.2.7, you can use newer versions but in that case you should update some code to make 2 projects of this repo work)
+1) Eclipse IDE for Java EE Developers
+2) JRE (I used v.1.8.0_251 but you can use newer versions)
+3) Apache Tomcat (I used version 9.0)
+4) Apache CXF Library (I used v.3.2.7, you can use newer versions but in that case you should update some code to make 2 projects of this repo work)
 
 ## How to support me
 |  |  |

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+      <meta charset="utf-8" />
+      <link rel="stylesheet" href="style.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+      <h1>Elenco nodi sensore</h1>
+  </head>
+  <body>
+
+      <script type="text/javascript">
+      okButton = '<i class="fa fa-check-circle" style="font-size:18px;color:green"></i>';
+      dangerButton = '<i class="fa fa-exclamation-triangle" style="font-size:18px;color:red"></i>';
+
+        function makeTable() {
+          var req = new XMLHttpRequest();
+          req.open("GET", "http://localhost:8080/Homework/rest/nodes", false);
+          req.send();
+
+          var json = JSON.parse(req.responseText).nodes.nodesCollection;
+
+          var htmlTable = "<table><tr><th>Nome</th>";
+          htmlTable += "<th>Posizione</th>";
+          htmlTable += "<th>Ultima Segnalazione</th>";
+          htmlTable += "<th>Stato</th>";
+          htmlTable += "<th></th>";
+          htmlTable += "</tr>";
+
+          for(var i=0; i<json.length; i++){
+            var node = json[i];
+
+            if(node.lastSignal != undefined){
+                var lastSignal = new Date(node.lastSignal);
+                lastSignal = lastSignal.toLocaleDateString() + ' ' + lastSignal.toLocaleTimeString();
+            }
+            else lastSignal = "";
+
+            var status;
+            if(node.workingStatus) status = okButton;
+            else status = dangerButton;
+
+            var infoButton = 'class="fa fa-info-circle" style="font-size:18px;color:blue"'
+
+            htmlTable += "<tr><td>Node "+node.nodeId+"</td>";
+            htmlTable += "<td>"+node.address+"</td>";
+            htmlTable += "<td>"+lastSignal+"</td>";
+            htmlTable += "<td>"+status+"</td>";
+            htmlTable += "<td><button onclick='showInfo("+i+")' style="+'border:none;'+"><i "+infoButton+"></i></button></td>";
+            htmlTable += "</tr>";
+          }
+
+          htmlTable += "</table>";
+          document.getElementById("table").innerHTML = htmlTable;
+        }
+      </script>
+
+      <div id="table">
+        <script>
+          makeTable();
+        </script>
+      </div>
+      <input type="button" value="Aggiorna" onclick="makeTable()"/>
+      <div id="navBar"></div>
+      <div id="info"></div>
+
+    <script type="text/javascript">
+    N = 5;
+
+    function showInfo(i){
+        var req = new XMLHttpRequest();
+        req.open("GET", "http://localhost:8080/Homework/rest/nodes/" + i, false);
+        req.send();
+
+        var node = req.responseText;
+
+        var htmlNavBar = "<ul class='navBar'>";
+        htmlNavBar += "<li class='navBar'><a onclick='showDescription("+JSON.stringify(node)+");'>Descrizione</a></li>";
+        htmlNavBar += "<li class='navBar'><a onclick='showSensors("+JSON.stringify(node)+");'>Sensori</a></li>";
+        htmlNavBar += "<li class='navBar'><a onclick='showSamples("+JSON.stringify(node)+");'>Dati ricevuti</a></li>";
+        htmlNavBar += "</ul>";
+
+        document.getElementById("navBar").innerHTML = htmlNavBar;
+        showDescription(node);
+    }
+
+    function showDescription(node) {
+        var node = JSON.parse(node).node;
+
+        var htmlDescription = "<table>";
+        htmlDescription += "<tr><th>Nome</th> <td>Nodo "+node.nodeId+"</td></tr>"
+        htmlDescription += "<tr><th>Indirizzo</th> <td>"+node.address+"</td></tr>"
+        htmlDescription += "</table>";
+
+        document.getElementById("info").innerHTML = htmlDescription;
+    }
+
+    function showSensors(node){
+        var htmlSensors = "";
+        var node = JSON.parse(node).node;
+        var sensors = node.sensors;
+
+        if(sensors != undefined){
+            if(!Array.isArray(sensors))
+                var sensors = [sensors];
+
+            for(var i=0; i<sensors.length; i++){
+                var status;
+                if(sensors[i].workingStatus) status = okButton;
+                else status = dangerButton;
+
+                htmlSensors += "<table>";
+                htmlSensors += "<tr><th>Attributo</th> <td>"+sensors[i].attribute+"</td> <td>"+status+"</td></tr>"
+                htmlSensors += "<tr><th>Codice</th> <td>"+sensors[i].code+"</td></tr>"
+                htmlSensors += "<tr><th>Intervallo di campionamento</th> <td>"+sensors[i].samplingTime+"</td></tr>"
+                htmlSensors += "<tr><th>Precisione</th> <td>"+sensors[i].precision+"</td></tr>"
+                htmlSensors += "</table>";
+            }
+        }
+        else htmlSensors = "<h4>Non sono presenti sensori</h>";
+
+        document.getElementById("info").innerHTML = "";
+        document.getElementById("info").innerHTML += htmlSensors;
+    }
+
+    function showSamples(JSONnode){
+        var htmlSamples = "";
+        var node = JSON.parse(JSONnode).node;
+        sensors = node.sensors;
+
+        if(sensors != undefined){
+            if(!Array.isArray(sensors))
+                var sensors = [sensors];
+
+            for(i=0; i<sensors.length; i++){
+                if(sensors[i].samplesList != undefined){
+                    var samplesList = sensors[i].samplesList;
+                    if(!Array.isArray(samplesList))
+                        samplesList = [samplesList];
+
+                    var lastPosition = samplesList.length-1;
+                    var lastSample = samplesList[lastPosition];
+
+                    htmlSamples += "<table>";
+                    htmlSamples += "<tr><th>Attributo</th> <td>"+sensors[i].attribute+"</td> <td><input class='updateButton' type='button' value='Aggiorna'></td></tr>";
+                    htmlSamples += "<tr><th>Ultimo valore inviato</th> <td id='value "+sensors[i].attribute+"'>"+lastSample.value+lastSample.unitMeasure+"</td></tr>";
+                    htmlSamples += "<tr><th>Data</th> <td id='date "+sensors[i].attribute+"'>"+lastSample.date+"</td></tr>";
+                    htmlSamples += "<tr><th>Valore medio</th> <td id='average "+sensors[i].attribute+"'>"+getSamplesAverage(sensors[i]) + lastSample.unitMeasure+"</td></tr>"
+                    htmlSamples += "</table>";
+                }
+                else htmlSamples += "<h4>Non sono presenti campioni per il sensore di "+sensors[i].attribute+"</h>"
+            }
+        }
+        else htmlSamples = "<h4>Non sono presenti sensori</h>"
+
+        document.getElementById("info").innerHTML = "";
+        document.getElementById("info").innerHTML = htmlSamples;
+
+        var buttons = document.getElementsByClassName('updateButton');
+        for(i=0; i<buttons.length; i++){
+            buttons[i].onclick = function(i){
+                return function() {
+                    updateSamplesTable(sensors[i]);
+                }
+            }(i);
+        }
+
+    }
+
+    function getSamplesAverage(sensor) {
+        var req = new XMLHttpRequest();
+        req.open("GET", "http://localhost:8080/Homework/rest/nodes/"+sensor.parentNodeId+"/sensors/"+sensor.attribute+"/samples_average", false);
+        req.send();
+
+        var average = JSON.parse(req.responseText);
+
+        return average;
+	}
+
+    function updateSamplesTable(sensor) {
+        var req = new XMLHttpRequest();
+        req.open("GET", "http://localhost:8080/Homework/rest/nodes/" + sensor.parentNodeId +"/sensors/" + sensor.attribute, false);
+        req.send();
+
+        var updatedSensor = JSON.parse(req.responseText).sensor;
+
+        lastPosition = updatedSensor.samplesList.length -1;
+        lastSample = updatedSensor.samplesList[lastPosition];
+
+        document.getElementById('value '+sensor.attribute).innerHTML = lastSample.value+lastSample.unitMeasure;
+        document.getElementById('date '+sensor.attribute).innerHTML = lastSample.date;
+        document.getElementById('average '+sensor.attribute).innerHTML = getSamplesAverage(sensor)+lastSample.unitMeasure;
+    }
+
+    </script>
+
+  </body>
+</html>

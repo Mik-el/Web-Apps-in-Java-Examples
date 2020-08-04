@@ -1,0 +1,34 @@
+table, th, td {
+  text-align: left;
+}
+
+table {
+   width: 100%;
+}
+
+tr:nth-child(odd) td {
+  background-color: #f2f2f2;
+}
+
+tr.header {
+  background-color: #d2d2d2;
+  color: #000000;
+}
+
+ul.navBar { list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #595959;
+            }
+
+li.navBar { float: left; }
+
+li.navBar a { display: block;
+              text-align: center;
+              padding: 14px 16px;
+              text-decoration: none;
+              color: white;
+            }
+
+li.navBar a:hover { background-color: #111; }
